@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignaManager — Actuelia</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a5276;
+            --primary-light: #2980b9;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #e0e4e8;
+            --sidebar-w: 240px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            display: flex; min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-w); background: var(--primary); color: white;
+            position: fixed; top: 0; left: 0; bottom: 0; padding: 20px 0; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
+        .sidebar-brand h2 { font-size: 18px; font-weight: 600; }
+        .sidebar-brand small { font-size: 11px; opacity: 0.7; }
+        .sidebar nav a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 20px; color: rgba(255,255,255,0.8);
+            text-decoration: none; font-size: 14px; transition: all 0.2s; cursor: pointer;
+        }
+        .sidebar nav a:hover, .sidebar nav a.active {
+            background: rgba(255,255,255,0.1); color: white;
+        }
+        .sidebar nav a.active { border-left: 3px solid var(--accent); }
+        .sidebar nav a i { width: 20px; text-align: center; }
+
+        /* Main */
+        .main { margin-left: var(--sidebar-w); flex: 1; padding: 24px 32px; }
+
+        /* Page sections */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-header h1 { font-size: 22px; font-weight: 600; }
+
+        /* Cards */
+        .card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+        .card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+            padding: 18px; display: flex; align-items: center; gap: 14px;
+        }
+        .stat-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: white;
+        }
+        .stat-icon.blue { background: var(--accent); }
+        .stat-icon.green { background: var(--success); }
+        .stat-icon.orange { background: var(--warning); }
+        .stat-icon.red { background: var(--danger); }
+        .stat-value { font-size: 24px; font-weight: 700; line-height: 1; }
+        .stat-label { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            background: var(--bg); padding: 10px 12px; text-align: left;
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--text-light); font-weight: 600; border-bottom: 2px solid var(--border);
+        }
+        tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tbody tr:hover { background: #f8f9fb; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 6px; border: 1px solid transparent;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--primary-light); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-icon { padding: 5px 8px; }
+
+        /* Forms */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+        .form-control {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 14px; color: var(--text); transition: border-color 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: var(--accent); }
+        select.form-control { appearance: auto; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* Badge */
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: #d5f5e3; color: #1e8449; }
+        .badge-danger { background: #fadbd8; color: #c0392b; }
+        .badge-info { background: #d6eaf8; color: #2471a3; }
+
+        /* Flash */
+        .flash {
+            padding: 10px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;
+            display: none; align-items: center; gap: 8px;
+        }
+        .flash.show { display: flex; }
+        .flash-success { background: #d5f5e3; color: #1e8449; border: 1px solid #a9dfbf; }
+        .flash-info { background: #d6eaf8; color: #2471a3; border: 1px solid #aed6f1; }
+        .flash-error { background: #fadbd8; color: #c0392b; border: 1px solid #f1948a; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 12px; padding: 24px;
+            width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+        }
+        .modal h3 { margin-bottom: 16px; font-size: 18px; }
+
+        /* Signature preview */
+        .signature-preview { border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: white; }
+
+        .copied { background: var(--success) !important; color: white !important; }
+
+        /* Tabs for templates */
+        .template-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+        .template-tab {
+            padding: 4px 12px; border-radius: 15px; font-size: 12px; cursor: pointer;
+            border: 1px solid var(--border); background: white; color: var(--text);
+        }
+        .template-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2><i class="fa-solid fa-signature"></i> SignaManager</h2>
+            <small>Gestion de signatures email</small>
+        </div>
+        <nav>
+            <a onclick="showPage('dashboard')" class="active" data-page="dashboard">
+                <i class="fa-solid fa-gauge-high"></i> Tableau de bord
+            </a>
+            <a onclick="showPage('collaborateurs')" data-page="collaborateurs">
+                <i class="fa-solid fa-users"></i> Collaborateurs
+            </a>
+            <a onclick="showPage('signatures')" data-page="signatures">
+                <i class="fa-solid fa-envelope"></i> Signatures
+            </a>
+            <a onclick="showPage('bannieres')" data-page="bannieres">
+                <i class="fa-solid fa-image"></i> Bannières
+            </a>
+            <a onclick="showPage('parametres')" data-page="parametres">
+                <i class="fa-solid fa-gear"></i> Paramètres
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div id="flashMsg" class="flash flash-success">
+            <i class="fa-solid fa-check-circle"></i> <span id="flashText"></span>
+        </div>
+
+        <!-- ==================== DASHBOARD ==================== -->
+        <div id="page-dashboard" class="page active">
+            <div class="page-header"><h1>Tableau de bord</h1></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                    <div><div class="stat-value" id="stat-collabs">0</div><div class="stat-label">Collaborateurs actifs</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-palette"></i></div>
+                    <div><div class="stat-value">3</div><div class="stat-label">Modèles de signature</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-image"></i></div>
+                    <div><div class="stat-value" id="stat-banners">0</div><div class="stat-label">Bannières actives</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="fa-solid fa-mouse-pointer"></i></div>
+                    <div><div class="stat-value" id="stat-clics">0</div><div class="stat-label">Clics sur bannières</div></div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-rocket"></i> Actions rapides</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <a onclick="showPage('collaborateurs')" class="btn btn-outline" style="justify-content: flex-start; cursor:pointer;">
+                            <i class="fa-solid fa-user-plus"></i> Ajouter un collaborateur
+                        </a>
+                        <a onclick="showPage('signatures')" class="btn btn-outline" style="justify-content: flex-start; cursor:pointer;">
+                            <i class="fa-solid fa-eye"></i> Prévisualiser les signatures
+                        </a>
+                        <a onclick="showPage('bannieres')" class="btn btn-outline" style="justify-content: flex-start; cursor:pointer;">
+                            <i class="fa-solid fa-plus"></i> Créer une bannière
+                        </a>
+                        <button class="btn btn-primary" style="justify-content: flex-start;" onclick="flashMessage('Déploiement simulé — en production, les signatures sont envoyées via MS Graph API.')">
+                            <i class="fa-solid fa-paper-plane"></i> Déployer toutes les signatures
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Derniers déploiements</div>
+                    <p style="color: var(--text-light); font-size: 13px;">Aucun déploiement pour le moment. Ajoutez des collaborateurs puis déployez leurs signatures.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== COLLABORATEURS ==================== -->
+        <div id="page-collaborateurs" class="page">
+            <div class="page-header">
+                <h1>Collaborateurs</h1>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" onclick="document.getElementById('importModal').classList.add('active')">
+                        <i class="fa-solid fa-file-csv"></i> Importer CSV
+                    </button>
+                    <button class="btn btn-primary" onclick="document.getElementById('addModal').classList.add('active')">
+                        <i class="fa-solid fa-user-plus"></i> Ajouter
+                    </button>
+                </div>
+            </div>
+            <div id="deptFilters" style="margin-bottom: 16px; display: flex; gap: 6px; flex-wrap: wrap;"></div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Nom</th><th>Email</th><th>Poste</th><th>Département</th><th>Template</th><th>Statut</th><th style="width:120px">Actions</th></tr>
+                    </thead>
+                    <tbody id="collabTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==================== SIGNATURES ==================== -->
+        <div id="page-signatures" class="page">
+            <div class="page-header">
+                <h1>Signatures email</h1>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline" onclick="document.getElementById('importTemplateModal').classList.add('active')">
+                        <i class="fa-solid fa-file-import"></i> Importer un modèle
+                    </button>
+                    <button class="btn btn-success" onclick="flashMessage('Déploiement simulé avec succès pour tous les collaborateurs.')">
+                        <i class="fa-solid fa-paper-plane"></i> Déployer toutes les signatures
+                    </button>
+                </div>
+            </div>
+            <!-- Template personnalisé actif -->
+            <div id="customTemplateInfo" class="card" style="display:none;background:#edf7ff;border-color:#aed6f1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong><i class="fa-solid fa-palette"></i> Modèle personnalisé actif</strong>
+                        <span id="customTemplateName" style="margin-left:8px;color:var(--text-light);font-size:13px;"></span>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm btn-outline" onclick="editCustomTemplate()"><i class="fa-solid fa-code"></i> Voir le HTML</button>
+                        <button class="btn btn-sm btn-danger" onclick="removeCustomTemplate()"><i class="fa-solid fa-trash"></i> Retirer</button>
+                    </div>
+                </div>
+            </div>
+            <div id="signaturesContainer"></div>
+        </div>
+
+        <!-- ==================== BANNIÈRES ==================== -->
+        <div id="page-bannieres" class="page">
+            <div class="page-header">
+                <h1>Bannières promotionnelles</h1>
+                <button class="btn btn-primary" onclick="document.getElementById('addBannerModal').classList.add('active')">
+                    <i class="fa-solid fa-plus"></i> Nouvelle bannière
+                </button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Aperçu</th><th>Nom</th><th>Période</th><th>Statut</th><th>Clics</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="bannerTable"></tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="card-title"><i class="fa-solid fa-circle-info"></i> Comment ça marche</div>
+                <p style="font-size: 13px; color: var(--text-light); line-height: 1.6;">
+                    Les bannières actives sont automatiquement insérées dans les signatures email de vos collaborateurs.
+                    Seule la bannière de plus haute priorité est affichée. Les clics sont comptabilisés via une redirection de tracking.
+                    Vous pouvez planifier des campagnes en définissant des dates de début et de fin.
+                </p>
+            </div>
+        </div>
+
+        <!-- ==================== PARAMÈTRES ==================== -->
+        <div id="page-parametres" class="page">
+            <div class="page-header"><h1>Paramètres</h1></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card">
+                    <div class="card-title"><i class="fa-solid fa-building"></i> Informations entreprise</div>
+                    <div class="form-group">
+                        <label>Nom de l'entreprise</label>
+                        <input type="text" id="cfgNom" class="form-control" value="Actuelia">
+                    </div>
+                    <div class="form-group">
+                        <label>Site web</label>
+                        <input type="url" id="cfgSite" class="form-control" value="https://www.actuelia.fr">
+                    </div>
+                    <div class="form-group">
+                        <label>URL du logo</label>
+                        <input type="text" id="cfgLogo" class="form-control" placeholder="https://...">
+                    </div>
+                    <div id="logoPreviewBox" style="margin-bottom:12px;display:none;">
+                        <img id="logoPreviewImg" src="" alt="Logo" style="max-height:40px;border:1px solid var(--border);border-radius:4px;padding:4px;">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveConfig()">
+                        <i class="fa-solid fa-save"></i> Enregistrer
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fa-brands fa-microsoft"></i> Microsoft Outlook 365</div>
+                    <span class="badge badge-info">Mode démonstration</span>
+                    <p style="font-size: 13px; color: var(--text-light); margin-top: 12px; line-height: 1.6;">
+                        Pour activer la synchronisation automatique avec Outlook 365, configurez les variables suivantes dans le fichier <code>.env</code> à la racine du projet :
+                    </p>
+                    <div style="background: var(--bg); padding: 12px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 12px; line-height: 1.8;">
+                        MS_CLIENT_ID=votre-client-id<br>
+                        MS_CLIENT_SECRET=votre-client-secret<br>
+                        MS_TENANT_ID=votre-tenant-id
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-light); margin-top: 10px;">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Créez une application dans <a href="https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps" target="_blank">Azure AD</a>
+                        avec les permissions <code>Mail.ReadWrite</code> et <code>User.Read.All</code>.
+                    </p>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px;">
+                <div class="card-title"><i class="fa-solid fa-file-csv"></i> Format CSV pour import</div>
+                <div style="background: var(--bg); padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; overflow-x: auto;">
+                    prenom;nom;email;poste;telephone;mobile;departement;linkedin_url<br>
+                    Jean;Dupont;jean.dupont@actuelia.fr;Consultant Senior;+33 1 23 45 67 89;+33 6 12 34 56 78;Conseil;https://linkedin.com/in/jeandupont
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Modal Ajouter collaborateur -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-user-plus"></i> Nouveau collaborateur</h3>
+            <div class="form-row">
+                <div class="form-group"><label>Prénom *</label><input type="text" id="addPrenom" class="form-control" required></div>
+                <div class="form-group"><label>Nom *</label><input type="text" id="addNom" class="form-control" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Email *</label><input type="email" id="addEmail" class="form-control" required></div>
+                <div class="form-group"><label>Poste *</label><input type="text" id="addPoste" class="form-control" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Téléphone</label><input type="text" id="addTel" class="form-control"></div>
+                <div class="form-group"><label>Mobile</label><input type="text" id="addMobile" class="form-control"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Département</label><input type="text" id="addDept" class="form-control"></div>
+                <div class="form-group">
+                    <label>Template</label>
+                    <select id="addTemplate" class="form-control">
+                        <option value="classique">Classique</option>
+                        <option value="moderne">Moderne</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Photo du consultant</label>
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                    <div style="flex:1;">
+                        <input type="url" id="addPhotoUrl" class="form-control" placeholder="URL de la photo (https://...)">
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">ou importez un fichier :</div>
+                        <input type="file" id="addPhotoFile" accept="image/*" class="form-control" style="margin-top:4px;" onchange="previewAddPhoto(this)">
+                    </div>
+                    <div id="addPhotoPreview" style="width:60px;height:60px;border-radius:50%;background:#e8e8e8;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:11px;color:#999;">Aperçu</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"><label>URL LinkedIn</label><input type="url" id="addLinkedin" class="form-control" placeholder="https://linkedin.com/in/..."></div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-outline" onclick="closeModal('addModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="addCollaborateur()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modifier collaborateur -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-pen"></i> Modifier le collaborateur</h3>
+            <input type="hidden" id="editId">
+            <div class="form-row">
+                <div class="form-group"><label>Prénom *</label><input type="text" id="editPrenom" class="form-control"></div>
+                <div class="form-group"><label>Nom *</label><input type="text" id="editNom" class="form-control"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Email *</label><input type="email" id="editEmail" class="form-control"></div>
+                <div class="form-group"><label>Poste *</label><input type="text" id="editPoste" class="form-control"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Téléphone</label><input type="text" id="editTel" class="form-control"></div>
+                <div class="form-group"><label>Mobile</label><input type="text" id="editMobile" class="form-control"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Département</label><input type="text" id="editDept" class="form-control"></div>
+                <div class="form-group">
+                    <label>Template</label>
+                    <select id="editTemplate" class="form-control">
+                        <option value="classique">Classique</option>
+                        <option value="moderne">Moderne</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Photo du consultant</label>
+                <div style="display:flex;gap:8px;align-items:flex-start;">
+                    <div style="flex:1;">
+                        <input type="url" id="editPhotoUrl" class="form-control" placeholder="URL de la photo (https://...)">
+                        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">ou importez un fichier :</div>
+                        <input type="file" id="editPhotoFile" accept="image/*" class="form-control" style="margin-top:4px;" onchange="previewEditPhoto(this)">
+                    </div>
+                    <div id="editPhotoPreview" style="width:60px;height:60px;border-radius:50%;background:#e8e8e8;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:11px;color:#999;">Aperçu</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"><label>URL LinkedIn</label><input type="url" id="editLinkedin" class="form-control"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-outline" onclick="closeModal('editModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="saveCollaborateur()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Import CSV -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-file-csv"></i> Importer des collaborateurs (CSV)</h3>
+            <p style="font-size: 13px; color: var(--text-light); margin-bottom: 12px;">
+                Format attendu (séparateur <code>;</code>) :<br>
+                <code>prenom;nom;email;poste;telephone;mobile;departement;linkedin_url</code>
+            </p>
+            <div class="form-group">
+                <input type="file" id="csvFile" accept=".csv" class="form-control">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-outline" onclick="closeModal('importModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="importCSV()">Importer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Importer un modèle de signature -->
+    <div class="modal-overlay" id="importTemplateModal">
+        <div class="modal" style="width:700px;">
+            <h3><i class="fa-solid fa-file-import"></i> Importer un modèle de signature</h3>
+            <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">
+                Importez un fichier HTML de signature ou collez directement le code HTML.
+                Utilisez les variables suivantes dans votre template :
+            </p>
+            <div style="background:var(--bg);padding:10px;border-radius:6px;font-family:monospace;font-size:11px;margin-bottom:14px;line-height:1.8;">
+                <code>{{prenom}}</code> <code>{{nom}}</code> <code>{{poste}}</code> <code>{{email}}</code>
+                <code>{{telephone}}</code> <code>{{mobile}}</code> <code>{{departement}}</code>
+                <code>{{photo}}</code> <code>{{linkedin}}</code> <code>{{site}}</code> <code>{{entreprise}}</code>
+            </div>
+            <div class="form-group">
+                <label>Nom du modèle</label>
+                <input type="text" id="templateName" class="form-control" placeholder="Ex: Signature Actuelia v2">
+            </div>
+            <div class="form-group">
+                <label>Importer un fichier HTML</label>
+                <input type="file" id="templateFile" accept=".html,.htm" class="form-control" onchange="loadTemplateFile(this)">
+            </div>
+            <div class="form-group">
+                <label>Ou collez le code HTML ci-dessous</label>
+                <textarea id="templateHtml" class="form-control" rows="12" style="font-family:monospace;font-size:12px;" placeholder="<table>...votre signature HTML...</table>"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Aperçu</label>
+                <div class="signature-preview" id="templatePreview" style="min-height:60px;">
+                    <span style="color:var(--text-light);font-size:13px;">L'aperçu s'affichera ici...</span>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:16px;">
+                <button class="btn btn-outline" onclick="previewTemplate()"><i class="fa-solid fa-eye"></i> Prévisualiser</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline" onclick="closeModal('importTemplateModal')">Annuler</button>
+                    <button class="btn btn-primary" onclick="saveCustomTemplate()"><i class="fa-solid fa-save"></i> Enregistrer le modèle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Voir/Editer template HTML -->
+    <div class="modal-overlay" id="editTemplateModal">
+        <div class="modal" style="width:700px;">
+            <h3><i class="fa-solid fa-code"></i> Code HTML du modèle</h3>
+            <div class="form-group">
+                <textarea id="editTemplateHtml" class="form-control" rows="16" style="font-family:monospace;font-size:12px;"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                <button class="btn btn-outline" onclick="closeModal('editTemplateModal')">Fermer</button>
+                <button class="btn btn-primary" onclick="updateCustomTemplate()"><i class="fa-solid fa-save"></i> Mettre à jour</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter bannière -->
+    <div class="modal-overlay" id="addBannerModal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-image"></i> Nouvelle bannière</h3>
+            <div class="form-group"><label>Nom de la campagne *</label><input type="text" id="bannerNom" class="form-control" placeholder="Ex: Webinaire Mars 2026"></div>
+            <div class="form-group">
+                <label>Image de la bannière * <small style="color:var(--text-light);">(600×100px recommandé)</small></label>
+                <input type="file" id="bannerImage" accept="image/*" class="form-control" onchange="previewBannerImage(this)">
+                <div id="bannerImagePreview" style="margin-top:8px;display:none;">
+                    <img id="bannerPreviewImg" src="" style="max-width:100%;max-height:80px;border-radius:4px;border:1px solid var(--border);">
+                </div>
+            </div>
+            <div class="form-group"><label>URL de destination *</label><input type="url" id="bannerUrl" class="form-control" placeholder="https://..."></div>
+            <div class="form-row">
+                <div class="form-group"><label>Date de début *</label><input type="date" id="bannerStart" class="form-control"></div>
+                <div class="form-group"><label>Date de fin (optionnel)</label><input type="date" id="bannerEnd" class="form-control"></div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button class="btn btn-outline" onclick="closeModal('addBannerModal')">Annuler</button>
+                <button class="btn btn-primary" onclick="addBanner()">Créer la bannière</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ======== DATA STORE (localStorage) ========
+const STORAGE_KEY = 'signamanager_data';
+
+function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+    return {
+        collaborateurs: [
+            { id: 1, prenom: 'Marie', nom: 'Martin', email: 'marie.martin@actuelia.fr', poste: 'Actuaire Senior', telephone: '+33 1 42 00 00 01', mobile: '', departement: 'Conseil', linkedin: 'https://linkedin.com/in/mariemartin', template: 'classique', photo: '' },
+            { id: 2, prenom: 'Thomas', nom: 'Bernard', email: 'thomas.bernard@actuelia.fr', poste: 'Consultant Data', telephone: '+33 1 42 00 00 02', mobile: '+33 6 12 34 56 78', departement: 'Data', linkedin: '', template: 'moderne', photo: '' },
+            { id: 3, prenom: 'Sophie', nom: 'Petit', email: 'sophie.petit@actuelia.fr', poste: 'Directrice Technique', telephone: '+33 1 42 00 00 03', mobile: '', departement: 'Direction', linkedin: '', template: 'minimal', photo: '' },
+        ],
+        bannieres: [],
+        config: { nom: 'Actuelia', site: 'https://www.actuelia.fr', logo: '' },
+        customTemplate: null, // { name: '', html: '' }
+        nextId: 4,
+        nextBannerId: 1,
+    };
+}
+
+function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let data = loadData();
+
+// ======== NAVIGATION ========
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+    document.querySelector(`[data-page="${name}"]`).classList.add('active');
+    if (name === 'collaborateurs') renderCollabs();
+    if (name === 'signatures') renderSignatures();
+    if (name === 'bannieres') renderBanners();
+    if (name === 'dashboard') updateStats();
+    if (name === 'parametres') loadConfig();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+});
+
+// ======== FLASH MESSAGE ========
+function flashMessage(text, type) {
+    const flash = document.getElementById('flashMsg');
+    const flashText = document.getElementById('flashText');
+    flash.className = 'flash flash-' + (type || 'success') + ' show';
+    flashText.textContent = text;
+    setTimeout(() => flash.classList.remove('show'), 3000);
+}
+
+// ======== STATS ========
+function updateStats() {
+    document.getElementById('stat-collabs').textContent = data.collaborateurs.length;
+    document.getElementById('stat-banners').textContent = data.bannieres.filter(b => b.actif).length;
+    document.getElementById('stat-clics').textContent = data.bannieres.reduce((s, b) => s + (b.clics || 0), 0);
+}
+
+// ======== COLLABORATEURS ========
+function renderCollabs(filterDept) {
+    const list = filterDept ? data.collaborateurs.filter(c => c.departement === filterDept) : data.collaborateurs;
+    const depts = [...new Set(data.collaborateurs.map(c => c.departement).filter(Boolean))];
+
+    // Filters
+    let filterHtml = `<a class="btn btn-sm ${!filterDept ? 'btn-primary' : 'btn-outline'}" onclick="renderCollabs()" style="cursor:pointer">Tous</a>`;
+    depts.forEach(d => {
+        filterHtml += `<a class="btn btn-sm ${filterDept === d ? 'btn-primary' : 'btn-outline'}" onclick="renderCollabs('${d}')" style="cursor:pointer">${d}</a>`;
+    });
+    document.getElementById('deptFilters').innerHTML = filterHtml;
+
+    // Table
+    const tpl = { classique: 'Classique', moderne: 'Moderne', minimal: 'Minimal' };
+    let html = '';
+    if (list.length === 0) {
+        html = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-light);">Aucun collaborateur. Cliquez sur "Ajouter" pour commencer.</td></tr>`;
+    }
+    list.forEach(c => {
+        html += `<tr>
+            <td><strong>${c.prenom} ${c.nom}</strong></td>
+            <td style="font-size:13px">${c.email}</td>
+            <td>${c.poste}</td>
+            <td>${c.departement || '—'}</td>
+            <td>${tpl[c.template] || 'Classique'}</td>
+            <td><span class="badge badge-success">Actif</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline btn-icon" onclick="editCollab(${c.id})" title="Modifier"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCollab(${c.id})" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>`;
+    });
+    document.getElementById('collabTable').innerHTML = html;
+}
+
+function addCollaborateur() {
+    const prenom = document.getElementById('addPrenom').value.trim();
+    const nom = document.getElementById('addNom').value.trim();
+    const email = document.getElementById('addEmail').value.trim();
+    const poste = document.getElementById('addPoste').value.trim();
+    if (!prenom || !nom || !email || !poste) { alert('Veuillez remplir les champs obligatoires.'); return; }
+
+    const photoUrl = document.getElementById('addPhotoUrl').value.trim() || window._addPhotoData || '';
+    data.collaborateurs.push({
+        id: data.nextId++,
+        prenom, nom, email, poste,
+        telephone: document.getElementById('addTel').value.trim(),
+        mobile: document.getElementById('addMobile').value.trim(),
+        departement: document.getElementById('addDept').value.trim(),
+        linkedin: document.getElementById('addLinkedin').value.trim(),
+        template: document.getElementById('addTemplate').value,
+        photo: photoUrl,
+    });
+    saveData(data);
+    closeModal('addModal');
+    window._addPhotoData = '';
+    ['addPrenom','addNom','addEmail','addPoste','addTel','addMobile','addDept','addLinkedin','addPhotoUrl'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('addPhotoPreview').innerHTML = '<span style="font-size:11px;color:#999;">Aperçu</span>';
+    renderCollabs();
+    flashMessage(`${prenom} ${nom} ajouté avec succès.`);
+}
+
+function editCollab(id) {
+    const c = data.collaborateurs.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('editPrenom').value = c.prenom;
+    document.getElementById('editNom').value = c.nom;
+    document.getElementById('editEmail').value = c.email;
+    document.getElementById('editPoste').value = c.poste;
+    document.getElementById('editTel').value = c.telephone || '';
+    document.getElementById('editMobile').value = c.mobile || '';
+    document.getElementById('editDept').value = c.departement || '';
+    document.getElementById('editLinkedin').value = c.linkedin || '';
+    document.getElementById('editPhotoUrl').value = c.photo || '';
+    document.getElementById('editTemplate').value = c.template || 'classique';
+    window._editPhotoData = c.photo || '';
+    if (c.photo) {
+        document.getElementById('editPhotoPreview').innerHTML = `<img src="${c.photo}" style="width:60px;height:60px;object-fit:cover;">`;
+    } else {
+        document.getElementById('editPhotoPreview').innerHTML = '<span style="font-size:11px;color:#999;">Aperçu</span>';
+    }
+    document.getElementById('editModal').classList.add('active');
+}
+
+function saveCollaborateur() {
+    const id = parseInt(document.getElementById('editId').value);
+    const c = data.collaborateurs.find(x => x.id === id);
+    if (!c) return;
+    c.prenom = document.getElementById('editPrenom').value.trim();
+    c.nom = document.getElementById('editNom').value.trim();
+    c.email = document.getElementById('editEmail').value.trim();
+    c.poste = document.getElementById('editPoste').value.trim();
+    c.telephone = document.getElementById('editTel').value.trim();
+    c.mobile = document.getElementById('editMobile').value.trim();
+    c.departement = document.getElementById('editDept').value.trim();
+    c.linkedin = document.getElementById('editLinkedin').value.trim();
+    c.photo = document.getElementById('editPhotoUrl').value.trim() || window._editPhotoData || c.photo || '';
+    c.template = document.getElementById('editTemplate').value;
+    saveData(data);
+    closeModal('editModal');
+    renderCollabs();
+    flashMessage(`${c.prenom} ${c.nom} mis à jour.`);
+}
+
+function deleteCollab(id) {
+    const c = data.collaborateurs.find(x => x.id === id);
+    if (!c || !confirm(`Supprimer ${c.prenom} ${c.nom} ?`)) return;
+    data.collaborateurs = data.collaborateurs.filter(x => x.id !== id);
+    saveData(data);
+    renderCollabs();
+    flashMessage(`${c.prenom} ${c.nom} supprimé.`, 'info');
+}
+
+function importCSV() {
+    const fileInput = document.getElementById('csvFile');
+    if (!fileInput.files.length) { alert('Sélectionnez un fichier CSV.'); return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split('\n').filter(l => l.trim());
+        if (lines.length < 2) { alert('Fichier vide ou invalide.'); return; }
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+            const parts = lines[i].split(';');
+            if (parts.length < 4) continue;
+            const email = parts[2]?.trim();
+            if (!email || data.collaborateurs.some(c => c.email === email)) continue;
+            data.collaborateurs.push({
+                id: data.nextId++,
+                prenom: parts[0]?.trim() || '', nom: parts[1]?.trim() || '',
+                email, poste: parts[3]?.trim() || '',
+                telephone: parts[4]?.trim() || '', mobile: parts[5]?.trim() || '',
+                departement: parts[6]?.trim() || '', linkedin: parts[7]?.trim() || '',
+                template: 'classique',
+            });
+            count++;
+        }
+        saveData(data);
+        closeModal('importModal');
+        renderCollabs();
+        flashMessage(`${count} collaborateur(s) importé(s).`);
+    };
+    reader.readAsText(fileInput.files[0]);
+}
+
+// ======== SIGNATURES ========
+// Template Actuelia fidèle au modèle officiel
+function generateActueliaSignature(c, cfg) {
+    return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#333333;max-width:650px;border:none;border-collapse:collapse;">
+    <tr>
+        <td style="vertical-align:top;padding:0 18px 0 0;width:110px;border:none;">
+            ${c.photo
+                ? `<img src="${c.photo}" alt="${c.prenom} ${c.nom}" width="110" height="110" style="border-radius:50%;display:block;object-fit:cover;" />`
+                : `<table cellpadding="0" cellspacing="0" border="0" width="110" height="110" style="border-radius:50%;background:#e8e8e8;border:none;"><tr><td align="center" valign="middle" style="font-size:32px;color:#999;font-family:Arial;border:none;">${c.prenom.charAt(0)}${c.nom.charAt(0)}</td></tr></table>`
+            }
+        </td>
+        <td style="vertical-align:top;padding-left:8px;border:none;">
+            <table cellpadding="0" cellspacing="0" border="0" style="border:none;border-collapse:collapse;">
+                <tr><td style="font-size:18px;font-weight:bold;color:#333333;padding:0;border:none;font-family:Arial,Helvetica,sans-serif;">${c.prenom} ${c.nom}</td></tr>
+                <tr><td style="font-size:14px;color:#666666;padding:0 0 10px 0;border:none;font-family:Arial,Helvetica,sans-serif;">${c.poste}</td></tr>
+                <tr><td style="font-size:13px;color:#555555;line-height:1.7;border:none;padding:0;font-family:Arial,Helvetica,sans-serif;">
+                    <a href="mailto:${c.email}" style="color:#555555;text-decoration:none;">${c.email}</a><br/>
+                    ${c.telephone ? c.telephone + '<br/>' : ''}${c.mobile ? c.mobile + '<br/>' : ''}51, rue Rennequin-75017 Paris<br/>
+                    <a href="${cfg.site || 'https://www.actuelia.fr'}" style="color:#4a86c8;text-decoration:none;font-weight:500;">${(cfg.site || 'https://www.actuelia.fr').replace('https://','').replace('http://','')}</a>
+                </td></tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="padding-top:16px;border:none;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:none;border-collapse:collapse;">
+                <tr>
+                    <td style="vertical-align:middle;border:none;">
+                        ${cfg.logo
+                            ? `<a href="${cfg.site || 'https://www.actuelia.fr'}" target="_blank" style="text-decoration:none;"><img src="${cfg.logo}" alt="${cfg.nom || 'Actuelia'}" height="45" style="display:block;border:none;" /></a>`
+                            : `<table cellpadding="0" cellspacing="0" border="0" style="border:none;"><tr>
+                                <td style="vertical-align:middle;padding-right:6px;border:none;">
+                                    <table cellpadding="0" cellspacing="0" border="0" width="32" height="36" style="border:none;"><tr><td align="center" valign="middle" style="font-size:20px;font-weight:bold;color:#4a86c8;font-family:Arial;border:none;">&#x2B21;</td></tr></table>
+                                </td>
+                                <td style="vertical-align:middle;border:none;">
+                                    <span style="font-size:16px;font-weight:bold;color:#333333;letter-spacing:2px;font-family:Arial,Helvetica,sans-serif;">${cfg.nom || 'ACTUELIA'}</span><br/>
+                                    <span style="font-size:8px;color:#999999;letter-spacing:0.5px;font-family:Arial,Helvetica,sans-serif;">Conseil &middot; Audit &middot; Formation en Actuariat</span>
+                                </td>
+                            </tr></table>`
+                        }
+                    </td>
+                    <td style="vertical-align:middle;text-align:right;border:none;">
+                        <table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;border:none;border-collapse:collapse;"><tr>
+                            <td style="padding:0 2px 0 0;border:none;">
+                                <a href="https://www.linkedin.com/company/actuelia" target="_blank" style="text-decoration:none;">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzRhODZjOCIvPjxwYXRoIGQ9Ik0xMS41IDEzLjVIOXY4aDIuNXYtOHpNMTAuMjUgMTIuMjVjLjgzIDAgMS41LS42NyAxLjUtMS41cy0uNjctMS41LTEuNS0xLjUtMS41LjY3LTEuNSAxLjUuNjcgMS41IDEuNSAxLjV6TTIyLjc1IDIxLjVoLTIuNXYtNC4yNWMwLTEuMTItLjQ1LTEuNzUtMS4zLTEuNzUtLjk1IDAtMS40NS42My0xLjQ1IDEuNzV2NC4yNUgxNVYxM2gyLjQ1djEuMjVoLjA1Yy4yNS0uNDUgMS4wNS0xLjI1IDIuNS0xLjI1IDEuODUgMCAzLjI1IDEgMy4yNSAzLjV2NXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4K" alt="LinkedIn" width="28" height="28" style="display:block;border:0;" />
+                                </a>
+                            </td>
+                            <td style="padding:0 2px 0 0;border:none;">
+                                <a href="https://x.com/cabinetactuelia" target="_blank" style="text-decoration:none;">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzRhODZjOCIvPjxwYXRoIGQ9Ik0xOC4yIDE0LjhMMjIuNSA5LjVoLTEuMmwtMy43IDQuNkwxNC4zIDkuNUgxMGw0LjUgNi42TDEwIDIyLjVoMS4ybDMuOS00LjkgMy4yIDQuOUgyMkwxOC4yIDE0Ljh6TTE1LjcgMTYuOWwtLjUtLjYtMy42LTUuMmgxLjZsMi45IDQuMi41LjYgMy44IDUuNWgtMS42TDE1LjcgMTYuOXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4K" alt="X" width="28" height="28" style="display:block;border:0;" />
+                                </a>
+                            </td>
+                            <td style="padding:0;border:none;">
+                                <a href="https://www.youtube.com/@actuelia" target="_blank" style="text-decoration:none;">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzRhODZjOCIvPjxwYXRoIGQ9Ik0yMy41IDEzLjJjLS4yLS44LS44LTEuNC0xLjYtMS42QzIwLjYgMTEuMiAxNiAxMS4yIDE2IDExLjJzLTQuNiAwLTUuOS40Yy0uOC4yLTEuNC44LTEuNiAxLjZDOC4yIDE0LjUgOC4yIDE2IDguMiAxNnMwIDEuNS4zIDIuOGMuMi44LjggMS40IDEuNiAxLjYgMS4zLjQgNS45LjQgNS45LjRzNC42IDAgNS45LS40Yy44LS4yIDEuNC0uOCAxLjYtMS42LjMtMS4zLjMtMi44LjMtMi44czAtMS41LS4zLTIuOHpNMTQgMTl2LTZsNC41IDNMMTQgMTl6IiBmaWxsPSIjZmZmIi8+PC9zdmc+Cg==" alt="YouTube" width="28" height="28" style="display:block;border:0;" />
+                                </a>
+                            </td>
+                        </tr></table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>`;
+}
+
+const signatureTemplates = {
+    classique: generateActueliaSignature,
+    moderne: generateActueliaSignature,
+    minimal: generateActueliaSignature,
+};
+
+function getSignatureHtml(c) {
+    // Si un template personnalisé est défini, l'utiliser en priorité
+    if (data.customTemplate && data.customTemplate.html) {
+        return data.customTemplate.html
+            .replace(/\{\{prenom\}\}/g, c.prenom)
+            .replace(/\{\{nom\}\}/g, c.nom)
+            .replace(/\{\{poste\}\}/g, c.poste)
+            .replace(/\{\{email\}\}/g, c.email)
+            .replace(/\{\{telephone\}\}/g, c.telephone || '')
+            .replace(/\{\{mobile\}\}/g, c.mobile || '')
+            .replace(/\{\{departement\}\}/g, c.departement || '')
+            .replace(/\{\{photo\}\}/g, c.photo || '')
+            .replace(/\{\{linkedin\}\}/g, c.linkedin || '')
+            .replace(/\{\{site\}\}/g, data.config.site || 'https://www.actuelia.fr')
+            .replace(/\{\{entreprise\}\}/g, data.config.nom || 'Actuelia');
+    }
+    return generateActueliaSignature(c, data.config);
+}
+
+function renderSignatures() {
+    const container = document.getElementById('signaturesContainer');
+
+    // Afficher/masquer le bandeau template personnalisé
+    const infoBar = document.getElementById('customTemplateInfo');
+    if (data.customTemplate && data.customTemplate.html) {
+        infoBar.style.display = 'block';
+        document.getElementById('customTemplateName').textContent = data.customTemplate.name || 'Sans nom';
+    } else {
+        infoBar.style.display = 'none';
+    }
+
+    if (data.collaborateurs.length === 0) {
+        container.innerHTML = `<div class="card" style="text-align:center;padding:40px">
+            <i class="fa-solid fa-users" style="font-size:36px;color:var(--text-light);margin-bottom:12px"></i>
+            <p style="color:var(--text-light)">Aucun collaborateur. <a href="#" onclick="showPage('collaborateurs')">Ajoutez-en un</a> pour voir les signatures.</p>
+        </div>`;
+        return;
+    }
+
+    let html = '';
+    data.collaborateurs.forEach(c => {
+        const sigHtml = getSignatureHtml(c);
+        html += `<div class="card" id="sig-${c.id}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+                <div>
+                    <div class="card-title" style="margin-bottom:2px">${c.prenom} ${c.nom}</div>
+                    <div style="font-size:12px;color:var(--text-light)">${c.email}${c.photo ? ' · <span style="color:var(--success);">Photo ✓</span>' : ''}</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <button class="btn btn-sm btn-outline" id="copyBtn-${c.id}" onclick="copySignature(${c.id})">
+                        <i class="fa-solid fa-copy"></i> Copier HTML
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="flashMessage('Signature déployée pour ${c.prenom} ${c.nom}')">
+                        <i class="fa-solid fa-paper-plane"></i> Déployer
+                    </button>
+                </div>
+            </div>
+            <div class="signature-preview" id="preview-${c.id}">${sigHtml}</div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function switchTemplate(id, tpl) {
+    const c = data.collaborateurs.find(x => x.id === id);
+    if (!c) return;
+    c.template = tpl;
+    saveData(data);
+    renderSignatures();
+}
+
+function copySignature(id) {
+    const c = data.collaborateurs.find(x => x.id === id);
+    if (!c) return;
+    const html = getSignatureHtml(c);
+    navigator.clipboard.writeText(html).then(() => {
+        const btn = document.getElementById('copyBtn-' + id);
+        btn.classList.add('copied');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copier HTML'; }, 2000);
+    });
+}
+
+// ======== BANNIÈRES ========
+function renderBanners() {
+    const tbody = document.getElementById('bannerTable');
+    if (data.bannieres.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light)">
+            Aucune bannière. Cliquez "Nouvelle bannière" pour en créer une.
+            <br/><small style="color:var(--accent);">3 bannières exemple sont disponibles dans le dossier static/uploads/banners/</small>
+        </td></tr>`;
+        return;
+    }
+    let html = '';
+    data.bannieres.forEach(b => {
+        const today = new Date().toISOString().slice(0, 10);
+        const isActive = b.actif && b.debut <= today && (!b.fin || b.fin >= today);
+        html += `<tr>
+            <td>${b.image ? `<img src="${b.image}" style="max-width:180px;max-height:50px;border-radius:4px;border:1px solid var(--border);">` : '—'}</td>
+            <td><strong>${b.nom}</strong><br/><a href="${b.url}" target="_blank" style="font-size:11px;color:var(--accent)">${b.url.substring(0,35)}...</a></td>
+            <td style="font-size:12px">${b.debut}${b.fin ? ' → ' + b.fin : ' (sans fin)'}</td>
+            <td><span class="badge ${isActive ? 'badge-success' : 'badge-danger'}">${isActive ? 'Active' : 'Inactive'}</span></td>
+            <td><strong>${b.clics || 0}</strong></td>
+            <td>
+                <button class="btn btn-sm btn-outline btn-icon" onclick="toggleBanner(${b.id})">
+                    <i class="fa-solid ${b.actif ? 'fa-toggle-on' : 'fa-toggle-off'}" style="color:${b.actif ? 'var(--success)' : 'var(--text-light)'}"></i>
+                </button>
+                <button class="btn btn-sm btn-danger btn-icon" onclick="deleteBanner(${b.id})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+window._bannerImageData = '';
+
+function previewBannerImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        window._bannerImageData = e.target.result;
+        document.getElementById('bannerPreviewImg').src = e.target.result;
+        document.getElementById('bannerImagePreview').style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function addBanner() {
+    const nom = document.getElementById('bannerNom').value.trim();
+    const url = document.getElementById('bannerUrl').value.trim();
+    const debut = document.getElementById('bannerStart').value;
+    const image = window._bannerImageData;
+    if (!nom || !url || !debut) { alert('Remplissez les champs obligatoires.'); return; }
+    if (!image) { alert('Veuillez sélectionner une image pour la bannière.'); return; }
+    data.bannieres.push({
+        id: data.nextBannerId++, nom, url, debut, image,
+        fin: document.getElementById('bannerEnd').value || null,
+        actif: true, clics: 0,
+    });
+    saveData(data);
+    window._bannerImageData = '';
+    document.getElementById('bannerImagePreview').style.display = 'none';
+    document.getElementById('bannerImage').value = '';
+    closeModal('addBannerModal');
+    renderBanners();
+    flashMessage(`Bannière "${nom}" créée.`);
+}
+
+function toggleBanner(id) {
+    const b = data.bannieres.find(x => x.id === id);
+    if (b) { b.actif = !b.actif; saveData(data); renderBanners(); }
+}
+
+function deleteBanner(id) {
+    if (!confirm('Supprimer cette bannière ?')) return;
+    data.bannieres = data.bannieres.filter(x => x.id !== id);
+    saveData(data); renderBanners();
+    flashMessage('Bannière supprimée.', 'info');
+}
+
+// ======== CONFIG ========
+function loadConfig() {
+    document.getElementById('cfgNom').value = data.config.nom || 'Actuelia';
+    document.getElementById('cfgSite').value = data.config.site || 'https://www.actuelia.fr';
+    document.getElementById('cfgLogo').value = data.config.logo || '';
+    updateLogoPreview();
+}
+
+function updateLogoPreview() {
+    const url = (data.config.logo || '').trim();
+    const box = document.getElementById('logoPreviewBox');
+    const img = document.getElementById('logoPreviewImg');
+    if (url) {
+        img.src = url;
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+function saveConfig() {
+    data.config.nom = document.getElementById('cfgNom').value.trim();
+    data.config.site = document.getElementById('cfgSite').value.trim();
+    data.config.logo = document.getElementById('cfgLogo').value.trim();
+    saveData(data);
+    updateLogoPreview();
+    flashMessage('Paramètres entreprise mis à jour.');
+}
+
+// ======== PHOTO HANDLING ========
+window._addPhotoData = '';
+window._editPhotoData = '';
+
+function previewAddPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        window._addPhotoData = e.target.result;
+        document.getElementById('addPhotoPreview').innerHTML = `<img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function previewEditPhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        window._editPhotoData = e.target.result;
+        document.getElementById('editPhotoUrl').value = '';
+        document.getElementById('editPhotoPreview').innerHTML = `<img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+// ======== TEMPLATE IMPORT ========
+function loadTemplateFile(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('templateHtml').value = e.target.result;
+    };
+    reader.readAsText(input.files[0]);
+}
+
+function previewTemplate() {
+    const html = document.getElementById('templateHtml').value;
+    if (!html.trim()) { alert('Collez ou importez un template HTML.'); return; }
+    // Remplacer les variables par des valeurs de démonstration
+    const preview = html
+        .replace(/\{\{prenom\}\}/g, 'Marie')
+        .replace(/\{\{nom\}\}/g, 'Martin')
+        .replace(/\{\{poste\}\}/g, 'Actuaire Senior')
+        .replace(/\{\{email\}\}/g, 'marie.martin@actuelia.fr')
+        .replace(/\{\{telephone\}\}/g, '+33 1 42 00 00 01')
+        .replace(/\{\{mobile\}\}/g, '+33 6 12 34 56 78')
+        .replace(/\{\{departement\}\}/g, 'Conseil')
+        .replace(/\{\{photo\}\}/g, '')
+        .replace(/\{\{linkedin\}\}/g, 'https://linkedin.com/in/mariemartin')
+        .replace(/\{\{site\}\}/g, data.config.site || 'https://www.actuelia.fr')
+        .replace(/\{\{entreprise\}\}/g, data.config.nom || 'Actuelia');
+    document.getElementById('templatePreview').innerHTML = preview;
+}
+
+function saveCustomTemplate() {
+    const name = document.getElementById('templateName').value.trim();
+    const html = document.getElementById('templateHtml').value.trim();
+    if (!html) { alert('Le code HTML du template est requis.'); return; }
+    data.customTemplate = { name: name || 'Template personnalisé', html };
+    saveData(data);
+    closeModal('importTemplateModal');
+    flashMessage(`Modèle "${data.customTemplate.name}" enregistré et activé.`);
+    if (document.getElementById('page-signatures').classList.contains('active')) {
+        renderSignatures();
+    }
+}
+
+function editCustomTemplate() {
+    if (!data.customTemplate) return;
+    document.getElementById('editTemplateHtml').value = data.customTemplate.html;
+    document.getElementById('editTemplateModal').classList.add('active');
+}
+
+function updateCustomTemplate() {
+    if (!data.customTemplate) return;
+    data.customTemplate.html = document.getElementById('editTemplateHtml').value.trim();
+    saveData(data);
+    closeModal('editTemplateModal');
+    flashMessage('Modèle mis à jour.');
+    renderSignatures();
+}
+
+function removeCustomTemplate() {
+    if (!confirm('Retirer le modèle personnalisé ? Les signatures reviendront au modèle Actuelia par défaut.')) return;
+    data.customTemplate = null;
+    saveData(data);
+    flashMessage('Modèle personnalisé retiré.', 'info');
+    renderSignatures();
+}
+
+// ======== INIT ========
+document.getElementById('bannerStart').valueAsDate = new Date();
+loadConfig();
+updateStats();
+</script>
+</body>
+</html>
