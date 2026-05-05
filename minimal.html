@@ -1,0 +1,39 @@
+<!--
+    Template "Minimal" — Signature email épurée et compacte
+    Variables : prenom, nom, poste, email, telephone, mobile,
+               photo_url, linkedin_url, departement,
+               entreprise_nom, entreprise_site, entreprise_logo,
+               banniere_html
+-->
+<table cellpadding="0" cellspacing="0" border="0" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; color: #333333; max-width: 500px;">
+    <tr>
+        <td style="padding-bottom: 8px;">
+            <span style="font-size: 14px; font-weight: bold; color: #222222;">{{ prenom }} {{ nom }}</span>
+            <span style="color: #999999; font-size: 12px;"> | {{ poste }}</span>
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 12px; color: #666666; line-height: 1.5; padding-bottom: 8px; border-top: 1px solid #e0e0e0; padding-top: 8px;">
+            {% if telephone %}{{ telephone }}{% endif %}{% if mobile %}{% if telephone %} &middot; {% endif %}{{ mobile }}{% endif %}
+            <br/>
+            <a href="mailto:{{ email }}" style="color: #333333; text-decoration: none;">{{ email }}</a>
+            {% if linkedin_url %} &middot; <a href="{{ linkedin_url }}" target="_blank" style="color: #0077b5; text-decoration: none;">LinkedIn</a>{% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="font-size: 11px; color: #999999;">
+            {% if entreprise_logo %}
+            <img src="{{ entreprise_logo }}" alt="{{ entreprise_nom }}" height="20" style="display: inline-block; vertical-align: middle; margin-right: 6px;" />
+            {% endif %}
+            {{ entreprise_nom }}
+            {% if entreprise_site %} &middot; <a href="{{ entreprise_site }}" style="color: #999999; text-decoration: none;">{{ entreprise_site }}</a>{% endif %}
+        </td>
+    </tr>
+    {% if banniere_html %}
+    <tr>
+        <td style="padding-top: 10px;">
+            {{ banniere_html }}
+        </td>
+    </tr>
+    {% endif %}
+</table>
